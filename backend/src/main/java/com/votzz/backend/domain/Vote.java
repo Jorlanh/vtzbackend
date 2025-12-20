@@ -3,7 +3,6 @@ package com.votzz.backend.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "votes", uniqueConstraints = {
@@ -12,9 +11,7 @@ import java.util.UUID;
 @Data 
 @EqualsAndHashCode(callSuper = true)
 public class Vote extends BaseEntity {
-    @Id 
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    // O campo 'id' já existe na BaseEntity como UUID
 
     @ManyToOne
     @JoinColumn(name = "assembly_id")
@@ -27,7 +24,6 @@ public class Vote extends BaseEntity {
     @Column(name = "opcao_escolhida")
     private String opcaoEscolhida; 
 
-    // CORREÇÃO: Mapeando 'timestamp' do Java para 'data_voto' do SQL
     @Column(name = "data_voto")
     private LocalDateTime timestamp;
     

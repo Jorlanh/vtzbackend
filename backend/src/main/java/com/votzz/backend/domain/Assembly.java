@@ -3,16 +3,13 @@ package com.votzz.backend.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "assemblies")
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Assembly extends BaseEntity {
-    @Id 
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    // O campo 'id' já existe na BaseEntity como UUID
 
     private String titulo;
     
@@ -25,7 +22,6 @@ public class Assembly extends BaseEntity {
     @Column(name = "data_fim")
     private LocalDateTime dataFim;
     
-    // CORREÇÃO: Mapeando para o nome exato no seu SQL (link_meet)
     @Column(name = "link_meet") 
     private String linkVideoConferencia; 
     

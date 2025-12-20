@@ -26,18 +26,16 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable) // Desabilita CSRF para API
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Habilita CORS
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                // Libera endpoints públicos, login e WebSocket
                 .requestMatchers("/api/auth/**", "/ws-votzz/**", "/h2-console/**", "/api/reports/**").permitAll()
-                // Qualquer outra requisição precisa de autenticação (ou do nosso filtro simulado)
+                // Permitimos acesso aos recursos de facilities para teste
+                .requestMatchers("/api/facilities/**").permitAll() 
                 .anyRequest().authenticated()
             )
-            // Adiciona nosso filtro de Tenant antes do filtro de autenticação padrão
             .addFilterBefore(tenantSecurityFilter, UsernamePasswordAuthenticationFilter.class);
             
-        // Configuração necessária para o H2 Console funcionar no navegador
         http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
@@ -46,9 +44,11 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000")); // Seu Frontend
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        // Adicionado PATCH para atualizações de status de reservas
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); 
+        // Expondo headers necessários para o filtro de simulação
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-ID", "X-Simulated-User"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

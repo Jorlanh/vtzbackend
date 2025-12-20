@@ -3,12 +3,16 @@ package com.votzz.backend.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.UUID;
-
 import com.votzz.backend.core.tenant.TenantContext;
 
 @MappedSuperclass
 @Data
 public abstract class BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
     @Column(name = "tenant_id", updatable = false)
     private UUID tenantId;
 
