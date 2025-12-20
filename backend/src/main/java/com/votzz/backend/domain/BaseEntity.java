@@ -1,25 +1,22 @@
 package com.votzz.backend.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
 import lombok.Data;
 import java.util.UUID;
-import com.votzz.backend.core.tenant.TenantContext;
 
-@MappedSuperclass
 @Data
+@MappedSuperclass
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "UUID")
     private UUID id;
 
-    @Column(name = "tenant_id", updatable = false)
+    @Column(name = "tenant_id")
     private UUID tenantId;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.tenantId == null) {
-            this.tenantId = TenantContext.getTenant();
-        }
-    }
 }

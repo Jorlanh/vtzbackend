@@ -1,10 +1,14 @@
 package com.votzz.backend.repository;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.votzz.backend.domain.ChatMessage;
-
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.UUID; // Certifique-se de importar UUID
 
-public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
-    List<ChatMessage> findByAssemblyIdOrderByTimestampAsc(String assemblyId);
+@Repository
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> {
+
+    // Altere de String para UUID aqui:
+    List<ChatMessage> findByAssemblyIdOrderByTimestampAsc(UUID assemblyId);
 }

@@ -1,8 +1,10 @@
 package com.votzz.backend.repository;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.votzz.backend.domain.CommonArea;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
 
 @Repository
-public interface CommonAreaRepository extends JpaRepository<CommonArea, String> {}
+public interface CommonAreaRepository extends JpaRepository<CommonArea, UUID> {
+}

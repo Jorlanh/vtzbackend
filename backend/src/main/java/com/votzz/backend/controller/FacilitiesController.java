@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/facilities")
@@ -22,16 +23,11 @@ public class FacilitiesController {
 
     @PostMapping("/areas")
     public CommonArea createArea(@RequestBody CommonArea area) {
-        // Garante que a área tenha um ID se não for enviado
-        if (area.getId() == null) {
-            area.setId(java.util.UUID.randomUUID().toString());
-        }
         return areaRepository.save(area);
     }
 
     @PatchMapping("/areas/{id}")
-    // Alterado de UUID para String para bater com o Repository
-    public ResponseEntity<CommonArea> updateArea(@PathVariable String id, @RequestBody CommonArea areaDetails) {
+    public ResponseEntity<CommonArea> updateArea(@PathVariable UUID id, @RequestBody CommonArea areaDetails) {
         return areaRepository.findById(id).map(area -> {
             if (areaDetails.getName() != null) area.setName(areaDetails.getName());
             if (areaDetails.getCapacity() != null) area.setCapacity(areaDetails.getCapacity());
@@ -43,8 +39,7 @@ public class FacilitiesController {
     }
 
     @DeleteMapping("/areas/{id}")
-    // Alterado de UUID para String para bater com o Repository
-    public ResponseEntity<Void> deleteArea(@PathVariable String id) {
+    public ResponseEntity<Void> deleteArea(@PathVariable UUID id) {
         areaRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }

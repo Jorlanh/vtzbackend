@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID; // Adicionado
 
 @RestController
 @RequestMapping("/api/facilities/bookings")
@@ -27,7 +28,8 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Booking> updateStatus(@PathVariable String id, @RequestBody String status) {
+    // Alterado de String para UUID no PathVariable
+    public ResponseEntity<Booking> updateStatus(@PathVariable UUID id, @RequestBody String status) {
         return bookingRepository.findById(id).map(booking -> {
             booking.setStatus(status.replace("\"", ""));
             return ResponseEntity.ok(bookingRepository.save(booking));

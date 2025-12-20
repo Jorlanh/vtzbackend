@@ -13,43 +13,60 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/assemblies")
-@RequiredArgsConstructor // Injeta automaticamente os final fields (Substitui @Autowired)
-@CrossOrigin(origins = "http://localhost:5173") // Permite seu Frontend Vite
+@RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class AssemblyController {
 
     private final AssemblyRepository assemblyRepository;
     private final VoteService voteService;
 
-    // Listar todas
     @GetMapping
     public List<Assembly> getAll() {
         return assemblyRepository.findAll();
     }
 
-    // Criar Assembleia (Gera Link de Vídeo Automático)
     @PostMapping
     public ResponseEntity<Assembly> criarAssembleia(@RequestBody Assembly assembly) {
         if (assembly.getLinkVideoConferencia() == null || assembly.getLinkVideoConferencia().isEmpty()) {
             String salaId = UUID.randomUUID().toString();
-            // Gera link único do Jitsi
             assembly.setLinkVideoConferencia("https://meet.jit.si/votzz-" + salaId);
         }
         return ResponseEntity.ok(assemblyRepository.save(assembly));
     }
 
-    // Buscar por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Assembly> getById(@PathVariable UUID id) {
-        return assemblyRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Assembly> getById(@PathVariable String id) {
+        try {
+            UUID uuid = UUID.fromString(id);
+            return assemblyRepository.findById(uuid)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    // Votar
     @PostMapping("/{id}/vote")
-    public ResponseEntity<Vote> votar(@PathVariable UUID id, 
+    public ResponseEntity<Vote> votar(@PathVariable String id, 
                                       @RequestParam UUID userId, 
                                       @RequestParam String opcao) {
-        return ResponseEntity.ok(voteService.registrarVoto(id, userId, opcao));
+        UUID assemblyUuid = UUID.fromString(id);
+        return ResponseEntity.ok(voteService.registrarVoto(assemblyUuid, userId, opcao));
+    }
+
+    // ACRESCENTADO: ENCERRAMENTO DE ASSEMBLEIA (ATA)
+    @PostMapping("/{id}/close")
+    public ResponseEntity<Assembly> encerrar(@PathVariable String id) {
+        UUID uuid = UUID.fromString(id);
+        return assemblyRepository.findById(uuid).map(assembly -> {
+            assembly.setStatus(Assembly.StatusAssembly.ENCERRADA);
+            return ResponseEntity.ok(assemblyRepository.save(assembly));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ACRESCENTADO: DOWNLOAD DO DOSSIÊ (SIMULADO)
+    @GetMapping("/{id}/dossier")
+    public ResponseEntity<String> getDossier(@PathVariable String id) {
+        return ResponseEntity.ok("Conteúdo do Dossiê Jurídico da Assembleia " + id);
     }
 }

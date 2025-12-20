@@ -2,27 +2,25 @@ package com.votzz.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import java.util.UUID;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "chat_message")
-public class ChatMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class ChatMessage extends BaseEntity { 
+    // Remova o campo private String id; se ele existir aqui, 
+    // pois o BaseEntity já fornece o ID como UUID.
 
     @Column(name = "assembly_id")
-    private String assemblyId;
+    private UUID assemblyId;
 
     @Column(name = "user_id")
-    private String userId;
+    private UUID userId;
 
-    @Column(name = "user_name")
     private String userName;
-
-    @Column(columnDefinition = "TEXT")
     private String content;
-
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp;
 }

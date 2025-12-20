@@ -2,44 +2,32 @@ package com.votzz.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "booking")
-public class Booking {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Booking extends BaseEntity {
+    // O campo 'id' e 'tenantId' já vêm do BaseEntity como UUID. 
+    // NÃO declare "private String id" aqui.
 
     @Column(name = "area_id")
-    private String areaId;
+    private UUID areaId;
 
     @Column(name = "user_id")
-    private String userId;
+    private UUID userId;
 
     private String unit;
-
-    @Column(name = "booking_date")
     private LocalDate bookingDate;
-
-    @Column(name = "start_time")
     private String startTime;
-
-    @Column(name = "end_time")
     private String endTime;
-
-    // PENDING, APPROVED, REJECTED, CANCELLED
     private String status;
-
-    @Column(name = "total_price")
     private BigDecimal totalPrice;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
-    
-    @Column(name = "approved_by")
+    private LocalDateTime createdAt;
     private String approvedBy;
 }
