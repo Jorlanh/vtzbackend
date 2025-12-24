@@ -10,15 +10,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Libera CORS especificamente para o seu Front (Vite)
+        // Endpoint de conexão para o SockJS
         registry.addEndpoint("/ws-votzz")
-                .setAllowedOriginPatterns("http://localhost:5173", "*") 
+                .setAllowedOriginPatterns("http://localhost:5173", "http://localhost:3000", "*")
                 .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic"); // Onde o front ESCUTA
-        registry.setApplicationDestinationPrefixes("/app"); // Onde o front ENVIA
+        // Onde o front se inscreve para receber (/topic/dashboard, /topic/assembly/ID)
+        registry.enableSimpleBroker("/topic");
+        // Prefixo para o front enviar mensagens ao servidor
+        registry.setApplicationDestinationPrefixes("/app");
     }
 }

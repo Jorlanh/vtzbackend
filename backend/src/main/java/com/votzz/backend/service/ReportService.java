@@ -23,6 +23,7 @@ public class ReportService {
     }
 
     public ByteArrayInputStream generateAuditCsv(UUID assemblyId) {
+        // Certifique-se que este método findByAssemblyId existe no seu VoteRepository
         List<Vote> votes = voteRepository.findByAssemblyId(assemblyId);
 
         CSVFormat format = CSVFormat.Builder.create(CSVFormat.DEFAULT)
@@ -34,10 +35,10 @@ public class ReportService {
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
 
             for (Vote vote : votes) {
-                // CORREÇÃO: Métodos getNome() e getCpf() agora existem na entidade User
+                // Agora os métodos existem graças à atualização na classe Vote
                 csvPrinter.printRecord(
-                    vote.getUser().getNome(),
-                    maskCpf(vote.getUser().getCpf()),
+                    vote.getUser() != null ? vote.getUser().getNome() : "Anônimo",
+                    vote.getUser() != null ? maskCpf(vote.getUser().getCpf()) : "***",
                     vote.getOpcaoEscolhida(), 
                     vote.getAuditHash(),
                     vote.getTimestamp()
@@ -52,13 +53,11 @@ public class ReportService {
     }
 
     private String maskCpf(String cpf) {
-        if (cpf == null || cpf.length() < 11) return "***";
-        // Remove caracteres não numéricos para garantir padronização antes de mascarar
+        if (cpf == null || cpf.length() < 11) return "***.***.***-**";
         String cleanCpf = cpf.replaceAll("\\D", "");
-        
         if (cleanCpf.length() == 11) {
              return "***." + cleanCpf.substring(3, 6) + "." + cleanCpf.substring(6, 9) + "-**";
         }
-        return "***"; 
+        return "***.***.***-**"; 
     }
 }

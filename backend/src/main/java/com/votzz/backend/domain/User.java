@@ -16,16 +16,17 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    // CORREÇÃO: Renomeado de 'name' para 'nome' para atender getNome()
+    // Sincronizado com o DDL e o formulário de cadastro
     private String nome; 
     
-    // CORREÇÃO: Adicionado campo CPF para atender getCpf()
     private String cpf;
 
     @Column(unique = true)
     private String email;
 
     private String password;
+
+    private String unidade;
 
     private String role; // ADMIN, SYNDIC, RESIDENT
 

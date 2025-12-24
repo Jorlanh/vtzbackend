@@ -19,34 +19,30 @@ public class VoteService {
 
     @Transactional
     public Vote registrarVoto(UUID assemblyId, UUID userId, String opcao) {
-        // 1. Buscas no banco
         Assembly assembly = assemblyRepository.findById(assemblyId)
             .orElseThrow(() -> new RuntimeException("Assembleia não existe"));
         
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("Usuário não existe"));
 
-        // 2. Validação de Tempo
         if (LocalDateTime.now().isAfter(assembly.getDataFim())) {
             throw new RuntimeException("Votação encerrada!");
         }
 
-        // 3. Validação de Unicidade (Regra de Negócio)
         if (voteRepository.existsByAssemblyIdAndUserId(assemblyId, userId)) {
             throw new RuntimeException("Você já votou nesta assembleia.");
         }
 
-        // 4. Geração do Hash de Auditoria (Imutabilidade)
-        // String única: ID_USER + ID_ASSEMBLEIA + OPCAO + DATA
         String dadosBrutos = userId.toString() + assemblyId.toString() + opcao + LocalDateTime.now().toString();
         String hashAssinatura = DigestUtils.sha256Hex(dadosBrutos);
 
         Vote voto = new Vote();
         voto.setAssembly(assembly);
-        voto.setUser(user);
-        voto.setOpcaoEscolhida(opcao);
+        voto.setUser(user); // Agora o método existe
+        voto.setOpcaoEscolhida(opcao); // Agora o método existe
         voto.setTimestamp(LocalDateTime.now());
         voto.setAuditHash(hashAssinatura);
+        voto.setTenant(assembly.getTenant()); // Importante manter o Tenant
 
         return voteRepository.save(voto);
     }
