@@ -1,53 +1,76 @@
 package com.votzz.backend.config.security;
 
-import com.votzz.backend.core.tenant.TenantContext; // Agora vai funcionar
+import com.votzz.backend.service.TokenService;
+import com.votzz.backend.domain.User;
+import com.votzz.backend.repository.UserRepository;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.lang.NonNull;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.util.Collections;
 
 @Component
 public class TenantSecurityFilter extends OncePerRequestFilter {
 
+    private final TokenService tokenService;
+    private final UserRepository userRepository;
+
+    public TenantSecurityFilter(TokenService tokenService, UserRepository userRepository) {
+        this.tokenService = tokenService;
+        this.userRepository = userRepository;
+    }
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+                                    @NonNull HttpServletResponse response, 
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+        
+        var token = recoverToken(request);
 
-        // Simulação de Header para Desenvolvimento
-        String simulatedUser = request.getHeader("X-Simulated-User");
-        String simulatedTenant = request.getHeader("X-Tenant-ID");
-
-        if (simulatedUser != null && simulatedTenant != null) {
+        if (token != null) {
             try {
-                // Configura o Tenant Context
-                TenantContext.setTenant(UUID.fromString(simulatedTenant));
+                // CORREÇÃO: O método retorna Claims diretamente, não precisa de instanceof
+                Claims claims = tokenService.validateToken(token);
+                String email = claims.getSubject();
 
-                // Simula autenticação do Spring Security
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        simulatedUser, 
-                        null, 
-                        List.of(new SimpleGrantedAuthority("ROLE_MANAGER"))
-                );
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (IllegalArgumentException e) {
-                // Ignora se o UUID for inválido
+                if (email != null) {
+                    User user = userRepository.findByEmail(email).orElse(null);
+                    
+                    if (user != null) {
+                        if (user.getTenant() != null) {
+                            TenantContext.setCurrentTenant(user.getTenant().getId().toString());
+                        }
+
+                        var authentication = new UsernamePasswordAuthenticationToken(
+                                user, 
+                                null, 
+                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                        );
+                        
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                }
+            } catch (Exception e) {
+                // Token inválido ou expirado - não autentica, mas deixa a requisição seguir (vai dar 403 se a rota for protegida)
+                logger.error("Erro ao validar token: " + e.getMessage());
             }
         }
+        
+        filterChain.doFilter(request, response);
+    }
 
-        try {
-            chain.doFilter(request, response);
-        } finally {
-            // Sempre limpa o contexto após a requisição
-            TenantContext.clear();
-        }
+    private String recoverToken(HttpServletRequest request) {
+        var authHeader = request.getHeader("Authorization");
+        if (authHeader == null) return null;
+        return authHeader.replace("Bearer ", "");
     }
 }

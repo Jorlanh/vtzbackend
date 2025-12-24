@@ -25,7 +25,6 @@ public class ReportService {
     public ByteArrayInputStream generateAuditCsv(UUID assemblyId) {
         List<Vote> votes = voteRepository.findByAssemblyId(assemblyId);
 
-        // Configuração moderna do CSV
         CSVFormat format = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader("NOME", "CPF", "OPÇÃO", "HASH AUDITORIA", "DATA/HORA")
                 .build();
@@ -35,10 +34,10 @@ public class ReportService {
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
 
             for (Vote vote : votes) {
+                // CORREÇÃO: Métodos getNome() e getCpf() agora existem na entidade User
                 csvPrinter.printRecord(
                     vote.getUser().getNome(),
                     maskCpf(vote.getUser().getCpf()),
-                    // CORREÇÃO AQUI: Adicionado o "da" no final
                     vote.getOpcaoEscolhida(), 
                     vote.getAuditHash(),
                     vote.getTimestamp()
@@ -54,9 +53,12 @@ public class ReportService {
 
     private String maskCpf(String cpf) {
         if (cpf == null || cpf.length() < 11) return "***";
-        if(cpf.contains(".")) {
-             return "***." + cpf.substring(4, 7) + "." + cpf.substring(8, 11) + "-**";
+        // Remove caracteres não numéricos para garantir padronização antes de mascarar
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        
+        if (cleanCpf.length() == 11) {
+             return "***." + cleanCpf.substring(3, 6) + "." + cleanCpf.substring(6, 9) + "-**";
         }
-        return "***" + cpf.substring(3, 9) + "**";
+        return "***"; 
     }
 }

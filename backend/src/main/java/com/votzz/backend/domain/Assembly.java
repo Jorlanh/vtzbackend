@@ -1,32 +1,39 @@
 package com.votzz.backend.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "assemblies")
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class Assembly extends BaseEntity {
-    // O campo 'id' já existe na BaseEntity como UUID
+@AllArgsConstructor
+@NoArgsConstructor
+public class Assembly {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     private String titulo;
+    private String description;
     
-    @Column(length = 2000)
-    private String descricao;
-    
-    @Column(name = "data_inicio")
     private LocalDateTime dataInicio;
-
-    @Column(name = "data_fim")
     private LocalDateTime dataFim;
     
-    @Column(name = "link_meet") 
-    private String linkVideoConferencia; 
-    
-    @Enumerated(EnumType.STRING)
-    private StatusAssembly status; 
+    private String linkVideoConferencia;
 
-    public enum StatusAssembly { ABERTA, ENCERRADA, AGENDADA }
+    @Enumerated(EnumType.STRING)
+    private StatusAssembly status;
+
+    // CORREÇÃO: Campo tenant adicionado
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
+    private Tenant tenant;
+
+    public enum StatusAssembly {
+        AGENDADA, ABERTA, ENCERRADA
+    }
 }

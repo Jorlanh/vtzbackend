@@ -1,24 +1,35 @@
 package com.votzz.backend.domain;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "users")
-@EqualsAndHashCode(callSuper = true)
-public class User extends BaseEntity {
-    // O campo 'id' já existe na BaseEntity como UUID
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
-    private String nome;
-    private String email;
-    private String senha;
+    // CORREÇÃO: Renomeado de 'name' para 'nome' para atender getNome()
+    private String nome; 
+    
+    // CORREÇÃO: Adicionado campo CPF para atender getCpf()
     private String cpf;
-    private String unidade;
-    private String role; 
+
+    @Column(unique = true)
+    private String email;
+
+    private String password;
+
+    private String role; // ADMIN, SYNDIC, RESIDENT
 
     @ManyToOne
-    @JoinColumn(name = "tenant_id", insertable = false, updatable = false)
+    @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 }

@@ -1,32 +1,32 @@
 package com.votzz.backend.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
-@Table(name = "votes", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"assembly_id", "user_id"})
-})
-@Data 
-@EqualsAndHashCode(callSuper = true)
-public class Vote extends BaseEntity {
-    // O campo 'id' já existe na BaseEntity como UUID
-
-    @ManyToOne
-    @JoinColumn(name = "assembly_id")
-    private Assembly assembly;
+@Table(name = "votes")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Vote {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "opcao_escolhida")
-    private String opcaoEscolhida; 
+    @ManyToOne
+    @JoinColumn(name = "assembly_id")
+    private Assembly assembly;
 
-    @Column(name = "data_voto")
+    // Campos usados no ReportService
+    private String opcaoEscolhida;
+    private String auditHash;
     private LocalDateTime timestamp;
-    
-    @Column(name = "audit_hash")
-    private String auditHash; 
 }
