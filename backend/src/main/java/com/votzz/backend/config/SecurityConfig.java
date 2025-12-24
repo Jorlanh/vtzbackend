@@ -33,19 +33,14 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Ativa o CORS configurado abaixo
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll() // Liberta login e registo
                 .anyRequest().authenticated()
             )
             .addFilterBefore(tenantSecurityFilter, UsernamePasswordAuthenticationFilter.class);
             
         return http.build();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
@@ -56,9 +51,11 @@ public class SecurityConfig {
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        // Permite as origens do seu frontend Vite/React
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // Importante: Adicione X-Tenant-ID se o seu filtro ainda o usar manualmente
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-ID"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

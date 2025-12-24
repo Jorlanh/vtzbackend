@@ -9,12 +9,10 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-// CORREÇÃO: Alterado de "booking" para "reservations" para alinhar com o SQL
-@Table(name = "reservations") 
+@Table(name = "reservations") // Sincronizado com SQL
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Booking extends BaseEntity {
-    // O campo 'id' e 'tenantId' já vêm do BaseEntity como UUID. 
     
     @Column(name = "area_id")
     private UUID areaId;
@@ -22,9 +20,10 @@ public class Booking extends BaseEntity {
     @Column(name = "user_id")
     private UUID userId;
 
+    @Column(name = "unit")
     private String unit;
     
-    @Column(name = "booking_date") // Garante o mapeamento snake_case do SQL
+    @Column(name = "booking_date") 
     private LocalDate bookingDate;
     
     @Column(name = "start_time")
@@ -38,7 +37,7 @@ public class Booking extends BaseEntity {
     @Column(name = "total_price")
     private BigDecimal totalPrice;
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
     
     @Column(name = "approved_by")
