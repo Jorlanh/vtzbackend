@@ -1,72 +1,92 @@
 package com.votzz.backend.controller;
 
 import com.votzz.backend.domain.Assembly;
-import com.votzz.backend.domain.Vote;
+import com.votzz.backend.domain.User;
 import com.votzz.backend.repository.AssemblyRepository;
-import com.votzz.backend.service.VoteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/api/assemblies")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 public class AssemblyController {
 
     private final AssemblyRepository assemblyRepository;
-    private final VoteService voteService;
 
     @GetMapping
-    public List<Assembly> getAll() {
-        return assemblyRepository.findAll();
-    }
-
-    @PostMapping
-    public ResponseEntity<Assembly> criarAssembleia(@RequestBody Assembly assembly) {
-        if (assembly.getLinkVideoConferencia() == null || assembly.getLinkVideoConferencia().isEmpty()) {
-            String salaId = UUID.randomUUID().toString();
-            assembly.setLinkVideoConferencia("https://meet.jit.si/votzz-" + salaId);
-        }
-        return ResponseEntity.ok(assemblyRepository.save(assembly));
+    public List<Assembly> getAll(@AuthenticationPrincipal User user) {
+        return assemblyRepository.findByTenantId(user.getTenant().getId());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Assembly> getById(@PathVariable String id) {
-        try {
-            UUID uuid = UUID.fromString(id);
-            return assemblyRepository.findById(uuid)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Assembly> getById(@PathVariable UUID id) {
+        return assemblyRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Assembly> createAssembly(
+            @RequestPart("data") Assembly assembly,
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @AuthenticationPrincipal User user) {
+        
+        assembly.setTenant(user.getTenant());
+        assembly.setStatus("AGENDADA");
+
+        if (assembly.getLinkVideoConferencia() != null) {
+            assembly.setLinkVideoConferencia(extractYoutubeId(assembly.getLinkVideoConferencia()));
         }
+
+        if (file != null && !file.isEmpty()) {
+            System.out.println("Arquivo recebido: " + file.getOriginalFilename());
+        }
+
+        return ResponseEntity.ok(assemblyRepository.save(assembly));
     }
 
-    @PostMapping("/{id}/vote")
-    public ResponseEntity<Vote> votar(@PathVariable String id, 
-                                      @RequestParam UUID userId, 
-                                      @RequestParam String opcao) {
-        UUID assemblyUuid = UUID.fromString(id);
-        return ResponseEntity.ok(voteService.registrarVoto(assemblyUuid, userId, opcao));
+    @GetMapping("/{id}/votes/csv")
+    public ResponseEntity<byte[]> downloadVotes(@PathVariable UUID id) {
+        Assembly assembly = assemblyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Assembleia não encontrada"));
+        
+        StringBuilder csv = new StringBuilder("Usuario;Unidade;Voto;Data\n");
+        
+        if (assembly.getVotes() != null) {
+            assembly.getVotes().forEach(v -> {
+                csv.append(v.getUser().getNome()).append(";")
+                   // Agora este método funcionará corretamente
+                   .append(v.getUser().getUnidade() != null ? v.getUser().getUnidade() : "N/A").append(";")
+                   .append(v.getOpcaoEscolhida()).append(";")
+                   .append(v.getTimestamp()).append("\n");
+            });
+        }
+        
+        byte[] bytes = csv.toString().getBytes(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=votos_" + id + ".csv")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(bytes);
     }
 
-    // ACRESCENTADO: ENCERRAMENTO DE ASSEMBLEIA (ATA)
-    @PostMapping("/{id}/close")
-    public ResponseEntity<Assembly> encerrar(@PathVariable String id) {
-        UUID uuid = UUID.fromString(id);
-        return assemblyRepository.findById(uuid).map(assembly -> {
-            assembly.setStatus(Assembly.StatusAssembly.ENCERRADA);
-            return ResponseEntity.ok(assemblyRepository.save(assembly));
-        }).orElse(ResponseEntity.notFound().build());
-    }
-
-    // ACRESCENTADO: DOWNLOAD DO DOSSIÊ (SIMULADO)
-    @GetMapping("/{id}/dossier")
-    public ResponseEntity<String> getDossier(@PathVariable String id) {
-        return ResponseEntity.ok("Conteúdo do Dossiê Jurídico da Assembleia " + id);
+    private String extractYoutubeId(String url) {
+        if (url == null || url.isBlank()) return url;
+        String pattern = "(?<=watch\\?v=|/videos/|embed/|youtu.be/|/v/|/e/|watch\\?v%3D|watch\\?feature=player_embedded&v=|%2Fvideos%2F|embed%2F|youtu.be%2F|%2Fv%2F)[^#&?\\n]*";
+        Pattern compiledPattern = Pattern.compile(pattern);
+        Matcher matcher = compiledPattern.matcher(url);
+        return (matcher.find()) ? matcher.group() : url;
     }
 }

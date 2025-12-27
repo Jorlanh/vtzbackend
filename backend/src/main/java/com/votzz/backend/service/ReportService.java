@@ -23,9 +23,13 @@ public class ReportService {
     }
 
     public ByteArrayInputStream generateAuditCsv(UUID assemblyId) {
+        // Certifique-se que este método findByAssemblyId existe no seu VoteRepository
         List<Vote> votes = voteRepository.findByAssemblyId(assemblyId);
 
+<<<<<<< HEAD
         // Configuração do CSV
+=======
+>>>>>>> 1d628f725aadaeeb6666b2f0266d411aed625f25
         CSVFormat format = CSVFormat.Builder.create(CSVFormat.DEFAULT)
                 .setHeader("NOME", "CPF", "OPÇÃO", "HASH AUDITORIA", "DATA/HORA")
                 .build();
@@ -35,9 +39,15 @@ public class ReportService {
              CSVPrinter csvPrinter = new CSVPrinter(writer, format)) {
 
             for (Vote vote : votes) {
+                // Agora os métodos existem graças à atualização na classe Vote
                 csvPrinter.printRecord(
+<<<<<<< HEAD
                     vote.getUser().getNome(),
                     maskCpf(vote.getUser().getCpf()),
+=======
+                    vote.getUser() != null ? vote.getUser().getNome() : "Anônimo",
+                    vote.getUser() != null ? maskCpf(vote.getUser().getCpf()) : "***",
+>>>>>>> 1d628f725aadaeeb6666b2f0266d411aed625f25
                     vote.getOpcaoEscolhida(), 
                     vote.getAuditHash(),
                     // AGORA FUNCIONA: Herda de BaseEntity
@@ -53,10 +63,11 @@ public class ReportService {
     }
 
     private String maskCpf(String cpf) {
-        if (cpf == null || cpf.length() < 11) return "***";
-        if(cpf.contains(".")) {
-             return "***." + cpf.substring(4, 7) + "." + cpf.substring(8, 11) + "-**";
+        if (cpf == null || cpf.length() < 11) return "***.***.***-**";
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        if (cleanCpf.length() == 11) {
+             return "***." + cleanCpf.substring(3, 6) + "." + cleanCpf.substring(6, 9) + "-**";
         }
-        return "***" + cpf.substring(3, 9) + "**";
+        return "***.***.***-**"; 
     }
 }

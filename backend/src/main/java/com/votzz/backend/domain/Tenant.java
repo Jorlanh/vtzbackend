@@ -6,13 +6,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
 @Entity
 @Table(name = "tenants")
+<<<<<<< HEAD
 public class Tenant { // REMOVIDO: extends BaseEntity
 
+=======
+@Data
+public class Tenant {
+>>>>>>> 1d628f725aadaeeb6666b2f0266d411aed625f25
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @Column(nullable = false)
@@ -20,6 +24,7 @@ public class Tenant { // REMOVIDO: extends BaseEntity
 
     @Column(unique = true)
     private String cnpj;
+<<<<<<< HEAD
 
     private boolean ativo;
 
@@ -50,4 +55,8 @@ public class Tenant { // REMOVIDO: extends BaseEntity
             createdAt = LocalDateTime.now();
         }
     }
+=======
+    private String plano;
+    private boolean ativo;
+>>>>>>> 1d628f725aadaeeb6666b2f0266d411aed625f25
 }
