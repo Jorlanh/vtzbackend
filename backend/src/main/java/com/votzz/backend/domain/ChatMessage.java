@@ -3,24 +3,30 @@ package com.votzz.backend.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import java.util.UUID;
-import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "chat_message")
-@Data
 @EqualsAndHashCode(callSuper = true)
-public class ChatMessage extends BaseEntity { 
-    // Remova o campo private String id; se ele existir aqui, 
-    // pois o BaseEntity já fornece o ID como UUID.
+public class ChatMessage extends BaseEntity {
 
-    @Column(name = "assembly_id")
-    private UUID assemblyId;
+    @ManyToOne
+    @JoinColumn(name = "tenant_id", insertable = false, updatable = false)
+    private Tenant tenant;
 
-    @Column(name = "user_id")
-    private UUID userId;
+    @ManyToOne
+    @JoinColumn(name = "assembly_id")
+    private Assembly assembly;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "user_name")
     private String userName;
+
     private String content;
-    private LocalDateTime timestamp;
+
+    // REMOVIDO: private LocalDateTime timestamp;
+    // O horário da mensagem é o 'createdAt' herdado da BaseEntity
 }

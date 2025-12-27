@@ -31,13 +31,12 @@ public class VoteService {
             throw new RuntimeException("Votação encerrada!");
         }
 
-        // 3. Validação de Unicidade (Regra de Negócio)
+        // 3. Validação de Unicidade
         if (voteRepository.existsByAssemblyIdAndUserId(assemblyId, userId)) {
             throw new RuntimeException("Você já votou nesta assembleia.");
         }
 
-        // 4. Geração do Hash de Auditoria (Imutabilidade)
-        // String única: ID_USER + ID_ASSEMBLEIA + OPCAO + DATA
+        // 4. Auditoria
         String dadosBrutos = userId.toString() + assemblyId.toString() + opcao + LocalDateTime.now().toString();
         String hashAssinatura = DigestUtils.sha256Hex(dadosBrutos);
 
@@ -45,8 +44,10 @@ public class VoteService {
         voto.setAssembly(assembly);
         voto.setUser(user);
         voto.setOpcaoEscolhida(opcao);
-        voto.setTimestamp(LocalDateTime.now());
         voto.setAuditHash(hashAssinatura);
+        
+        // CORREÇÃO: Removemos setTimestamp. 
+        // A BaseEntity vai definir o 'createdAt' automaticamente ao salvar.
 
         return voteRepository.save(voto);
     }

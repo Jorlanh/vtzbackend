@@ -1,21 +1,32 @@
-// Local: src/main/java/com/votzz/backend/domain/Announcement.java
 package com.votzz.backend.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "announcements")
-@Data
 @EqualsAndHashCode(callSuper = true)
 public class Announcement extends BaseEntity {
+
+    @ManyToOne
+    @JoinColumn(name = "tenant_id", insertable = false, updatable = false)
+    private Tenant tenant;
+
+    @Column(nullable = false)
     private String title;
+
     private String content;
-    private String priority; // NORMAL, URGENT
-    private String targetType; // ALL, OWNERS
+
+    private String priority; // NORMAL, HIGH
+
+    @Column(name = "target_type")
+    private String targetType; // ALL, OWNER, TENANT
+
+    @Column(name = "requires_confirmation")
     private Boolean requiresConfirmation;
-    private LocalDateTime date;
+
+    // REMOVIDO: private LocalDateTime date;
+    // A data do comunicado agora é o 'createdAt' herdado da BaseEntity
 }

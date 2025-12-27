@@ -10,9 +10,7 @@ import java.util.UUID;
 @Repository
 public interface AssemblyRepository extends JpaRepository<Assembly, UUID> {
     
-    // Corrigido para buscar pelo Enum certo (StatusAssembly)
+    // Busca pelo Enum definido na Entidade
     List<Assembly> findByStatus(Assembly.StatusAssembly status);
     
-    // Se precisar buscar datas (ex: assembleias abertas agora)
-    // List<Assembly> findByDataFimAfter(LocalDateTime data);
 }

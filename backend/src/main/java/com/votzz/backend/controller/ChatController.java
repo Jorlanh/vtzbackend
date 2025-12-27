@@ -1,6 +1,8 @@
 package com.votzz.backend.controller;
 
+import com.votzz.backend.domain.Assembly;
 import com.votzz.backend.domain.ChatMessage;
+import com.votzz.backend.domain.User;
 import com.votzz.backend.repository.ChatMessageRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Controller
-@RequiredArgsConstructor // Injeta o repositório automaticamente
+@RequiredArgsConstructor
 public class ChatController {
 
     private final ChatMessageRepository chatMessageRepository;
@@ -22,31 +24,45 @@ public class ChatController {
     @SendTo("/topic/assembly/{assemblyId}")
     public ChatMessageDTO sendMessage(@DestinationVariable UUID assemblyId, ChatMessageDTO messageDTO) {
         
-        // 1. Configurar o timestamp
+        // 1. Configurar o timestamp NO DTO (para quem recebe ver a hora)
         messageDTO.setTimestamp(LocalDateTime.now());
         messageDTO.setAssemblyId(assemblyId);
 
-        // 2. SALVAR NO BANCO (Persistência do Histórico)
+        // 2. SALVAR NO BANCO
         ChatMessage entity = new ChatMessage();
-        entity.setAssemblyId(assemblyId);
-        entity.setUserId(messageDTO.getUserId()); // Precisamos do ID do usuário no DTO
+        
+        // --- CORREÇÃO 1: Mapear IDs para Objetos (Hibernate Proxy) ---
+        // Não precisamos buscar no banco, basta criar um objeto com o ID setado.
+        
+        Assembly assemblyRef = new Assembly();
+        assemblyRef.setId(assemblyId);
+        entity.setAssembly(assemblyRef); // Usa setAssembly, não setAssemblyId
+
+        User userRef = new User();
+        userRef.setId(messageDTO.getUserId());
+        entity.setUser(userRef); // Usa setUser, não setUserId
+
+        // --- CORREÇÃO 2: Campos simples ---
         entity.setUserName(messageDTO.getSenderName());
         entity.setContent(messageDTO.getContent());
-        entity.setTimestamp(messageDTO.getTimestamp());
-        entity.setTenantId(messageDTO.getTenantId()); // Importante para Multi-tenancy
+        entity.setTenantId(messageDTO.getTenantId()); 
+
+        // --- CORREÇÃO 3: Timestamp ---
+        // Não usamos entity.setTimestamp(). 
+        // A BaseEntity preenche 'createdAt' automaticamente ao salvar.
 
         chatMessageRepository.save(entity);
 
         return messageDTO;
     }
 
-    @Data // Uso do Lombok para reduzir o código de Getters/Setters
+    @Data
     public static class ChatMessageDTO {
         private String senderName;
         private String content;
         private LocalDateTime timestamp;
         private UUID assemblyId;
-        private UUID userId;   // Adicionado para o banco
-        private UUID tenantId; // Adicionado para o banco
+        private UUID userId;   
+        private UUID tenantId; 
     }
 }
